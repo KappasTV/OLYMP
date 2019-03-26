@@ -1,0 +1,24 @@
+#include <iostream>
+using namespace std;
+int main() {
+    string s;
+    cin>>s;
+    int signal=0;
+    for (int i = 0; i < s.size(); ++i) {
+        if (s[i] != '0') {
+            if (stoi(s) % (s[i] - '0') != 0) {
+                signal = 1;
+                break;
+            }
+        } else
+        {
+            signal = 1;
+            break;
+        }
+    }
+    if(signal==1)
+        cout<<"NO";
+    else
+        cout<<"YES";
+    return 0;
+}
