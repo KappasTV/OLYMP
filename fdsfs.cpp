@@ -1,254 +1,170 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+#include <bits/stdc++.h>
+#include <Windows.h>
+#include <TlHelp32.h>
+#include <chrono>
 
-namespace OSLab1
+
+#define WINDOWS_TICK 10000000
+#define SEC_TO_UNIX_EPOCH 11644473600LL
+#define NUMBER_OF_PRIORITIES 8
+
+typedef long long ll;
+typedef long double ld;
+
+using namespace std;
+using namespace std::chrono;
+
+unsigned WindowsTickToUnixSeconds(ll windowsTicks)
 {
-    internal class Program
+    return (unsigned)(windowsTicks / WINDOWS_TICK - SEC_TO_UNIX_EPOCH);
+}
+
+int NUMBER_OF_PROCESSES;
+
+int main()
+{
+    STARTUPINFO startupinfo;
+    ZeroMemory(&startupinfo,sizeof(STARTUPINFO));
+    PROCESS_INFORMATION process_information = {nullptr};
+
+    printf("Input the number of the processes\n");
+    cin >> NUMBER_OF_PROCESSES;
+
+    auto start = high_resolution_clock::now();
+
+
+    HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+    if( hSnap == INVALID_HANDLE_VALUE )
     {
-        public static void Main(string[] args)
-        {
-            string choose;
-            var processes = new List<Process>();
-            var paused = new List<bool>();
-            var killed = new List<bool>();
-            var startTime = new List<DateTime>();
-            var endTime = new List<DateTime>();
-
-
-            do
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.Write("\n\nMenu:\n");
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine("\t1. Start process(es).");
-                Console.WriteLine("\t2. Pause process.");
-                Console.WriteLine("\t3. Play process.");
-                Console.WriteLine("\t4. Kill process.");
-                Console.WriteLine("\t5. Change priority.");
-                Console.WriteLine("\t6. Print table.");
-                Console.WriteLine("\t0. Exit.");
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.Write(">>> ");
-                Console.ForegroundColor = ConsoleColor.White;
-
-                choose = Console.ReadLine();
-
-                switch (choose)
-                {
-                    case "1": //Start
-                        try
-                        {
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.Write("Enter number of processes: ");
-                            Console.ForegroundColor = ConsoleColor.White;
-                            int processesNumber = int.Parse(Console.ReadLine());
-
-                            for (int i = 0; i < processesNumber; i++)
-                            {
-                                var temp = Process.Start(@"C:\Users\Prkour228\Desktop\OSFunc\Release\OSFunc.exe");
-                                processes.Add(temp);
-                                paused.Add(false);
-                                killed.Add(false);
-                                startTime.Add(DateTime.Now);
-                                endTime.Add(DateTime.Now);
-                            }
-                        }
-                        catch (FormatException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\nIncorrect format.");
-                            Console.ForegroundColor = ConsoleColor.White;
-                        }
-
-                        break;
-                    case "2": //Pause
-                        try
-                        {
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.Write("Enter index of processes: ");
-                            Console.ForegroundColor = ConsoleColor.White;
-                            int processesIndex = int.Parse(Console.ReadLine());
-                            processes[processesIndex].SuspendProcess();
-                            paused[processesIndex] = true;
-                            Console.WriteLine("Process {0} friezed.", processes[processesIndex].Id);
-                        }
-                        catch (FormatException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\nIncorrect format.\n");
-                            Console.ForegroundColor = ConsoleColor.White;
-                        }
-                        catch (ArgumentOutOfRangeException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\nIndex out of range.\n");
-                            Console.ForegroundColor = ConsoleColor.White;
-                        }
-
-                        break;
-                    case "3": //Play
-                        try
-                        {
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.Write("Enter index of processes: ");
-                            Console.ForegroundColor = ConsoleColor.White;
-                            int processesIndex = int.Parse(Console.ReadLine());
-                            processes[processesIndex].ResumeProcess();
-                            paused[processesIndex] = false;
-                            Console.WriteLine("Process {0} play.", processes[processesIndex].Id);
-                        }
-                        catch (FormatException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\nIncorrect format.\n");
-                            Console.ForegroundColor = ConsoleColor.White;
-                        }
-                        catch (ArgumentOutOfRangeException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\nIndex out of range.\n");
-                            Console.ForegroundColor = ConsoleColor.White;
-                        }
-
-                        break;
-                    case "4": //Kill
-                        try
-                        {
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.Write("Enter index of processes: ");
-                            Console.ForegroundColor = ConsoleColor.White;
-                            int processesIndex = int.Parse(Console.ReadLine());
-                            killed[processesIndex] = true;
-                            endTime[processesIndex] = DateTime.Now;
-                            processes[processesIndex].Kill();
-                            Console.WriteLine("Process {0} killed.", processes[processesIndex].Id);
-                        }
-                        catch (FormatException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\nIncorrect format.\n");
-                            Console.ForegroundColor = ConsoleColor.White;
-                        }
-                        catch (ArgumentOutOfRangeException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\nIndex out of range.\n");
-                            Console.ForegroundColor = ConsoleColor.White;
-                        }
-
-                        break;
-                    case "5": //Change
-                        try
-                        {
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.Write("Enter index of processes: ");
-                            Console.ForegroundColor = ConsoleColor.White;
-                            int processesIndex = int.Parse(Console.ReadLine());
-
-                            Console.WriteLine("\nNew priority:");
-                            Console.WriteLine("\t1. Idle.");
-                            Console.WriteLine("\t2. High.");
-                            Console.WriteLine("\t3. RealTime.");
-                            Console.WriteLine("\t4. BelowNormal.");
-                            Console.WriteLine("\t5. AboveNormal.");
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.Write(">>> ");
-                            Console.ForegroundColor = ConsoleColor.White;
-
-                            switch (Console.ReadLine())
-                            {
-                                case "1":
-                                    processes[processesIndex].PriorityClass = ProcessPriorityClass.Idle;
-                                    break;
-                                case "2":
-                                    processes[processesIndex].PriorityClass = ProcessPriorityClass.High;
-                                    break;
-                                case "3":
-                                    processes[processesIndex].PriorityClass = ProcessPriorityClass.RealTime;
-                                    break;
-                                case "4":
-                                    processes[processesIndex].PriorityClass = ProcessPriorityClass.BelowNormal;
-                                    break;
-                                case "5":
-                                    processes[processesIndex].PriorityClass = ProcessPriorityClass.AboveNormal;
-                                    break;
-                                default:
-                                    Console.ForegroundColor = ConsoleColor.Red;
-                                    Console.WriteLine("\nInvalid menu item.\n");
-                                    Console.ForegroundColor = ConsoleColor.White;
-                                    break;
-                            }
-
-                            Console.WriteLine("Process {0} have priority {1}.", processes[processesIndex].Id,
-                                processes[processesIndex].PriorityClass.ToString());
-                        }
-                        catch (FormatException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\nIncorrect format.\n");
-                            Console.ForegroundColor = ConsoleColor.White;
-                        }
-                        catch (ArgumentOutOfRangeException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\nIndex out of range.\n");
-                            Console.ForegroundColor = ConsoleColor.White;
-                        }
-
-                        break;
-                    case "6": //Print
-                        if (processes.Count == 0)
-                        {
-                            Console.WriteLine("\nList of processes is empty.");
-                            break;
-                        }
-
-                        Console.WriteLine("name\tlocal index\tpid\tworking\t\ttime\t\t\tpriority");
-
-                        for (int i = 0; i < processes.Count; i++)
-                        {
-                            try
-                            {
-                                Console.Write("{0}\t{1}\t\t{2}\t", processes[i].ProcessName, i,
-                                    processes[i].Id);
-                                if (killed[i])
-                                {
-                                    Console.WriteLine("Killed\t\t{0}\t{1}", endTime[i] - startTime[i], 
-                                        processes[i].PriorityClass.ToString());
-                                }
-                                else if (paused[i])
-                                {
-                                    Console.Write("Paused\t\t");
-                                    Console.WriteLine("{0}\t{1}", DateTime.Now - endTime[i], 
-                                        processes[i].PriorityClass.ToString());
-                                }
-                                else
-                                {
-                                    Console.Write(processes[i].Responding.ToString() + "\t\t");
-                                    Console.WriteLine("{0}\t{1}", DateTime.Now - endTime[i], 
-                                        processes[i].PriorityClass.ToString());
-                                }
-                            }
-                            catch (InvalidOperationException)
-                            {
-                                Console.WriteLine("{0}\t{1}\t\t{2}\t{3}\t\t{4}\t{5}", "Killed", i,
-                                    "Killed",
-                                    "Killed", endTime[i] - startTime[i],
-                                    "\t\tKilled");
-                            }
-                        }
-
-                        break;
-                    default:
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("\nInvalid menu item.");
-                        Console.ForegroundColor = ConsoleColor.White;
-                        break;
-                }
-            } while (choose != "0");
-
-            Console.WriteLine("\n\nGood bye!");
-        }
+        return( FALSE );
     }
+
+    HANDLE PROCESSES[NUMBER_OF_PROCESSES];
+    DWORD pids[NUMBER_OF_PROCESSES];
+    HANDLE THREADS[NUMBER_OF_PROCESSES];
+    DWORD tids[NUMBER_OF_PROCESSES];
+
+    DWORD PRIORITIES[NUMBER_OF_PRIORITIES] = {ABOVE_NORMAL_PRIORITY_CLASS, BELOW_NORMAL_PRIORITY_CLASS,
+                           HIGH_PRIORITY_CLASS, IDLE_PRIORITY_CLASS, NORMAL_PRIORITY_CLASS, PROCESS_MODE_BACKGROUND_BEGIN,
+                           PROCESS_MODE_BACKGROUND_END, REALTIME_PRIORITY_CLASS,
+                           };
+
+    for( int i = 0; i < NUMBER_OF_PROCESSES; i++)
+    {
+        BOOL process = CreateProcess(TEXT("C:\\Users\\Admin\\CLionProjects\\newAlgo\\cmake-build-debug\\labs0ss.exe"),
+                                     NULL, NULL,
+                                     NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &startupinfo, &process_information);
+        if (!process)
+        {
+            cout << "Something went wrong..." << endl;
+            return 1;
+        }
+        PROCESSES[i] = process_information.hProcess;
+        pids[i] = process_information.dwProcessId;
+        THREADS[i] = process_information.hThread;
+        tids[i] = process_information.dwThreadId;
+    }
+
+        int task,index;
+        bool looper = true;
+        while (looper)
+        {
+            printf("~~~|| Processes control menu ||~~~\n\n");
+            printf("1 - Stop the chosen process\n");
+            printf("2 - Start the chosen process\n");
+            printf("3 - Complete the chosen process\n");
+            printf("4 - Kill the chosen process\n");
+            printf("5 - Set priorities of processes\n");
+            printf("6 - Set priority of the chosen process\n");
+            printf("7 - Get the information about the chosen process\n");
+            printf("8 - Exit from the menu and check the time\n");
+            printf("9 - Exit from the program\n\n");
+            printf("~~~|| Processes control menu ||~~~\n\n");
+            printf("Select the command: ");
+            cin >> task;
+            switch (task){
+                case 1:
+                    printf("Stop the process. Select an id: ");
+                    cin >> index;
+                    SuspendThread(THREADS[index-1]);
+                    printf("Done!\n");
+                    break;
+                case 2:
+                    printf("Continue the process. Select an id: ");
+                    cin >> index;
+                    ResumeThread(THREADS[index-1]);
+                    if(ResumeThread(THREADS[index-1]) == DWORD(0)){
+                        printf("The chosen process hasn`t been suspended yet!");
+                    }else if(ResumeThread(THREADS[index-1]) == DWORD(1)){
+                        printf("The chosen process has already been resumed!");
+                    }
+                    else if(ResumeThread(THREADS[index-1]) > DWORD(1)){
+                        printf("The chosen process is still suspended!");
+                    }
+                    printf("Done!\n");
+                    break;
+                case 3:
+                    printf("Complete the process. Select an id: ");
+                    cin >> index;
+                    DWORD EXIT;
+                    TerminateThread(THREADS[index-1],EXIT);
+                    break;
+                case 4:
+                    printf("Kill the process. Select an id: ");
+                    cin >> index;
+                    TerminateProcess(PROCESSES[index-1],UINT (0));
+                    printf("Done. The process number %d was terminated\n",index);
+                    break;
+                case 5:
+                    printf("Changing priorities of %d processes....\n", NUMBER_OF_PROCESSES);
+                    for(int i = 0; i < NUMBER_OF_PROCESSES; i++)
+                    {
+                        if((i+1)%2 == 0){
+                            SetPriorityClass(PROCESSES[i],NORMAL_PRIORITY_CLASS);
+                        } else{
+                            SetPriorityClass(PROCESSES[i],REALTIME_PRIORITY_CLASS);
+                        }
+                    }
+                    printf("Done!\n");
+                    break;
+                case 6:
+                    printf("Select a process: ");
+                    cin >> index;
+                    int priority;
+                    printf("Select a priority: ");
+                    cin >> priority;
+                    SetPriorityClass(PROCESSES[index-1],PRIORITIES[priority-1]);
+                    printf("Done!\n");
+                    if(priority > NUMBER_OF_PRIORITIES){
+                        printf("Wrong priority input!\n");
+                    }
+                    break;
+                case 7:
+                    printf("Select an index to get more information: ");
+                    cin >> index;
+                    cout << PROCESSES[index-1] << " | " << pids[index-1] << " | " << GetPriorityClass(PROCESSES[index-1]) <<
+                    " | " << tids[index-1] << endl;
+                    printf("Done!\n");
+                    break;
+                case 8:
+                    looper = false;
+                    break;
+                case 9:
+                    printf("Bye!");
+                    for(int i = 0; i < NUMBER_OF_PROCESSES; i++)
+                    {
+                        TerminateProcess(PROCESSES[i],UINT(0));
+                    }
+                    return 1;
+                default:
+                    printf("Wrong input!\n");
+            }
+        }
+
+        auto stop = high_resolution_clock::now();
+
+        auto duration = duration_cast<microseconds>(stop - start);
+
+        cout << duration.count() / pow(10, 6) << endl;
+    return 0;
 }
